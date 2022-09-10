@@ -13,6 +13,15 @@
 <input @bind="Id" />
 <button @onclick="ChangeWeatherAsync">Fetch</button>
 
+@if (RequestAcceptedForHandling)
+{
+    <div>Request has been accepted for handling. </div>
+}
+
+@if(RequestHasBeenValidated) {
+    <div>Request has been validated and is pending handling. </div>
+}
+
 @if (forecast == null && errors?.Count() == 0)
 {
     <p><em>Loading...</em></p>
@@ -54,11 +63,13 @@ else if (forecast != null)
 
 @code {
     private WeatherForecastViewModel? forecast;
+    private bool RequestAcceptedForHandling;
+    private bool RequestHasBeenValidated;
     private List<ValidationFailure> errors = new();
     private int Id { get; set; } = 1;
     private WeatherHub WeatherHub = new WeatherHub();
 
-    protected async Task ChangeWeatherAsync() => await WeatherHub.InvokeAsync(x => x.UserChangesWeather, Id);
+    protected async Task ChangeWeatherAsync() => await WeatherHub.InvokeAsync(x => x.UserRequestsWeatherChange, Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -69,15 +80,31 @@ else if (forecast != null)
                 {
                     forecast = success;
                     errors = new();
+                    RequestAcceptedForHandling = false;
+                    RequestHasBeenValidated = false;
                     InvokeAsync(StateHasChanged);
                 },
                 error =>
                 {
                     forecast = null;
                     errors = error.Errors;
+                    RequestAcceptedForHandling = false;
+                    RequestHasBeenValidated = false;
                     InvokeAsync(StateHasChanged);
                 }
             );
+            return Task.CompletedTask;
+        });
+        WeatherHub.Register(x => x.WeatherChangeRequestAcceptedForHandling, () =>
+        {
+            RequestAcceptedForHandling = true;
+            InvokeAsync(StateHasChanged);
+            return Task.CompletedTask;
+        }); 
+        WeatherHub.Register(x => x.WeatherChangeRequestValidatedAndPendingHandling, () =>
+        {
+            RequestHasBeenValidated = true;
+            InvokeAsync(StateHasChanged);
             return Task.CompletedTask;
         });
         await WeatherHub.InvokeAsync(x => x.SyncState);

@@ -1,10 +1,15 @@
 using Handlers.WeatherForecast;
+using MassTransit;
 using Microsoft.AspNetCore.ResponseCompression;
+using Server.Consumers;
 using Server.Hubs;
 using Server.Infra.MediatR;
 
 // SERVICES
 var builder = WebApplication.CreateBuilder(args);
+
+// LOGGER
+builder.Logging.AddConsole();
 
 // SWAGGER
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -36,6 +41,24 @@ builder.Services.AddResponseCompression(opts =>
         new[] { "application/octet-stream" });
 });
 builder.Services.AddSignalR();
+
+// MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+    x.AddConsumer<WeatherChangeRequestAcceptedMessageConsumer>();
+    x.AddConsumer<WeatherChangeRequestDeniedMessageConsumer>();
+    x.AddConsumer<WeatherChangeRequestConsumer>();
+});
 
 // APP
 var app = builder.Build();

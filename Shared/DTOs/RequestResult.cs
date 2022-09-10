@@ -10,6 +10,10 @@ public record RequestResult<TResponse> : RequestResult
     [JsonConstructor]
     public RequestResult() { }
 
+    public RequestResult(ValidationError error) : base(error)
+    {
+    }
+
     public void Switch(Action<TResponse> f0, Action<ValidationError> f1)
     {
         if (Data is not null)

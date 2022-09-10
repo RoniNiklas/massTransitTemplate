@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using MassTransit;
+using Microsoft.AspNetCore.SignalR;
+using Shared.Messages;
 
 namespace Server.Hubs;
 
 public class WeatherHub : Hub<IWeatherHubServerInvoked>, IWeatherHubClientInvoked
 {
-    private readonly IMediator Mediator;
-    public WeatherHub(IMediator mediator) : base()
+    private readonly IPublishEndpoint _publishEndpoint;
+    public WeatherHub(IPublishEndpoint publishEndpoint) : base()
     {
-        Mediator = mediator;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task SyncState()
@@ -15,10 +17,13 @@ public class WeatherHub : Hub<IWeatherHubServerInvoked>, IWeatherHubClientInvoke
         await Clients.Caller.WeatherHasChanged(WeatherHubState.CurrentState);
     }
 
-    public async Task UserChangesWeather(int id)
+    public async Task UserRequestsWeatherChange(int id)
     {
-        WeatherHubState.CurrentState = await Mediator.Send(new GetSingleWeatherForecast(id));
-        await Clients.All.WeatherHasChanged(WeatherHubState.CurrentState);
+        await _publishEndpoint.Publish(
+            new WeatherChangeRequestMessage(
+                Guid.NewGuid(),
+                new GetSingleWeatherForecast(id)));
+        await Clients.Caller.WeatherChangeRequestAcceptedForHandling();
     }
 }
 

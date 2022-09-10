@@ -4,10 +4,12 @@ public interface IWeatherHubServerInvoked
 {
     public const string Path = "/weather";
     Task WeatherHasChanged(RequestResult<WeatherForecastViewModel> weather);
+    Task WeatherChangeRequestAcceptedForHandling();
+    Task WeatherChangeRequestValidatedAndPendingHandling();
 }
 
 public interface IWeatherHubClientInvoked
 {
     Task SyncState();
-    Task UserChangesWeather(int id);
+    Task UserRequestsWeatherChange(int id);
 }
