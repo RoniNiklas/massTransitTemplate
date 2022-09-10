@@ -16,11 +16,12 @@ public class WeatherChangeRequestAcceptedMessageConsumer : IConsumer<WeatherChan
 
     public async Task Consume(ConsumeContext<WeatherChangeRequestAcceptedMessage> context)
     {
-        await _hubContext.Clients.All.SendAsync(
+        var msg = context.Message;
+        await _hubContext.Clients.Group(msg.GroupId).SendAsync(
             nameof(IWeatherHubServerInvoked.WeatherChangeRequestValidatedAndPendingHandling)
         );
         await Task.Delay(5000);
-        WeatherHubState.CurrentState = context.Message.Data;
+        WeatherHubState.CurrentState = msg.Data;
         await _hubContext.Clients.All.SendAsync(
             nameof(IWeatherHubServerInvoked.WeatherHasChanged),
             WeatherHubState.CurrentState

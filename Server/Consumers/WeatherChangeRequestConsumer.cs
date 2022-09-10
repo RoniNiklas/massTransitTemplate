@@ -26,7 +26,8 @@ public class WeatherChangeRequestConsumer : IConsumer<WeatherChangeRequestMessag
 
     public async Task Consume(ConsumeContext<WeatherChangeRequestMessage> context)
     {
-        var valRes = context.Message.Request.Validate();
+        var msg = context.Message;
+        var valRes = msg.Request.Validate();
 
         await Task.Delay(3000);
 
@@ -34,17 +35,22 @@ public class WeatherChangeRequestConsumer : IConsumer<WeatherChangeRequestMessag
         {
             var weather = new WeatherForecastViewModel
                 (
-                    DateTime.Now.AddDays(context.Message.Request.Id),
+                    DateTime.Now.AddDays(msg.Request.Id),
                     Random.Shared.Next(-20, 55),
                     _summaries[Random.Shared.Next(_summaries.Length)]
                 );
-            await context.Publish(new WeatherChangeRequestAcceptedMessage(context.Message.Guid, weather));
+            await context.Publish(
+                new WeatherChangeRequestAcceptedMessage(
+                        msg.Guid,
+                        msg.GroupId,
+                        weather));
             return;
         }
 
         await context.Publish(
             new WeatherChangeRequestDeniedMessage(
-                context.Message.Guid,
+                msg.Guid,
+                msg.GroupId,
                 new(valRes.Errors)
         ));
     }

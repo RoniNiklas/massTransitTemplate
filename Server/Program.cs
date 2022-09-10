@@ -70,6 +70,7 @@ app.UseRouting();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors();
+
 app.MapHub<WeatherHub>(IWeatherHubServerInvoked.Path);
 
 app.Run();

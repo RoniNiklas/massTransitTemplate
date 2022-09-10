@@ -1,2 +1,2 @@
 ﻿namespace Shared.Messages;
-public record WeatherChangeRequestAcceptedMessage(Guid Guid, WeatherForecastViewModel Data);
+public record WeatherChangeRequestAcceptedMessage(Guid Guid, string GroupId, WeatherForecastViewModel Data);

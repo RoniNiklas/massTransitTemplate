@@ -16,10 +16,10 @@ public class WeatherChangeRequestDeniedMessageConsumer : IConsumer<WeatherChange
 
     public async Task Consume(ConsumeContext<WeatherChangeRequestDeniedMessage> context)
     {
-        WeatherHubState.CurrentState = new(context.Message.Error);
-        await _hubContext.Clients.All.SendAsync(
+        var msg = context.Message;
+        await _hubContext.Clients.Group(msg.GroupId).SendAsync(
             nameof(IWeatherHubServerInvoked.WeatherHasChanged),
-            WeatherHubState.CurrentState
+            new RequestResult(msg.Error)
         );
     }
 }

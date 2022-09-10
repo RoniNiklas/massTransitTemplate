@@ -19,9 +19,12 @@ public class WeatherHub : Hub<IWeatherHubServerInvoked>, IWeatherHubClientInvoke
 
     public async Task UserRequestsWeatherChange(int id)
     {
+        var guid = Guid.NewGuid().ToString();
+        await Groups.AddToGroupAsync(Context.ConnectionId, guid);
         await _publishEndpoint.Publish(
             new WeatherChangeRequestMessage(
                 Guid.NewGuid(),
+                guid.ToString(),
                 new GetSingleWeatherForecast(id)));
         await Clients.Caller.WeatherChangeRequestAcceptedForHandling();
     }
